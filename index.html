@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Lịch chấm công</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --text:#1b1f24; --muted:#6a737d; --line:#e1e4e8;
+  --accent:#2563eb; --accent-text:#fff;
+  --ok:#15803d; --ok-bg:#dcfce7; --warn:#b45309; --warn-bg:#fef3c7; --err:#b91c1c; --err-bg:#fee2e2;
+  --le:#dc2626; --le-bg:#fee2e2; --tuan:#64748b; --tuan-bg:#eef1f5;
+  --rieng:#7c3aed; --rieng-bg:#ede9fe; --lam:#0f766e; --lam-bg:#ccfbf1; --gio:#d97706;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --card:#161b22; --text:#e6edf3; --muted:#8b949e; --line:#30363d;
+    --accent:#3b82f6; --accent-text:#fff;
+    --ok:#4ade80; --ok-bg:#12321f; --warn:#fbbf24; --warn-bg:#3a2a06; --err:#f87171; --err-bg:#3b1414;
+    --le:#f87171; --le-bg:#3b1717; --tuan:#94a3b8; --tuan-bg:#1e2530;
+    --rieng:#a78bfa; --rieng-bg:#2a2140; --lam:#2dd4bf; --lam-bg:#0f2f2c; --gio:#fbbf24;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif}
+main{max-width:560px;margin:0 auto;padding:12px 16px 48px}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;max-width:560px;margin:0 auto}
+.top h1{font-size:17px;margin:0}
+.pill{font-size:13px;padding:3px 10px;border-radius:99px;background:var(--line);color:var(--muted);white-space:nowrap}
+.pill.saving{background:var(--warn-bg);color:var(--warn)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.err{background:var(--err-bg);color:var(--err)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+h2{font-size:17px;margin:0 0 10px}
+h3{font-size:15px;margin:18px 0 8px}
+.banner{border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:14px}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.banner.err{background:var(--err-bg);color:var(--err)}
+.muted{color:var(--muted)} .small{font-size:13px}
+button,.btn{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:10px 14px;min-height:44px}
+button:disabled{opacity:.5;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+button.danger{color:var(--err);border-color:var(--err)}
+button.big{width:100%;font-size:16px;font-weight:600;min-height:52px}
+button.link{border:0;background:none;color:var(--accent);padding:6px 0;min-height:0}
+input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:42px}
+input[type=checkbox]{min-height:0;width:20px;height:20px;accent-color:var(--accent)}
+label{display:block}
+
+/* Hôm nay */
+.hero .date{font-size:20px;font-weight:700}
+.hero .clock{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.offbox{background:var(--tuan-bg);border-radius:10px;padding:12px;margin:12px 0}
+.offbox.le{background:var(--le-bg)}
+.offbox.rieng{background:var(--rieng-bg)}
+.offbox b{display:block;margin-bottom:8px}
+.luot{border-top:1px solid var(--line);padding:12px 0}
+.luot .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.luot .name{font-weight:700}
+.st{font-weight:600;text-align:right}
+.st.done{color:var(--ok)} .st.stop{color:var(--err)} .st.warn{color:var(--warn)} .st.off{color:var(--muted)} .st.plan{color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row > *{flex:1 1 auto}
+.ot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+
+/* Lịch */
+.calhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.calhead h2{margin:0;text-align:center;flex:1}
+.calhead button{min-width:48px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 0}
+.seg button{flex:1;border:0;border-radius:0;min-height:40px;font-size:14px}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wd{text-align:center;font-size:12px;color:var(--muted);padding:2px 0}
+.day{position:relative;aspect-ratio:1/1.05;border-radius:9px;border:1px solid transparent;background:var(--bg);padding:3px 2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:0;font-size:15px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.day .n{font-weight:600}
+.day .lb{font-size:9.5px;line-height:1.1;text-align:center;overflow:hidden;max-width:100%;white-space:nowrap}
+.day.blank{background:none;pointer-events:none}
+.day.tuan{background:var(--tuan-bg);color:var(--tuan)}
+.day.le{background:var(--le-bg);color:var(--le)}
+.day.rieng{background:var(--rieng-bg);color:var(--rieng)}
+.day.lam{background:var(--lam-bg);color:var(--lam)}
+.day.gio{border-color:var(--gio)}
+.day.gio::after{content:"⏰";position:absolute;top:1px;right:2px;font-size:9px}
+.day.today{outline:2px solid var(--accent);outline-offset:1px}
+.day .dot{position:absolute;bottom:4px;width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.day .dot.half{background:var(--warn)}
+.day .dot.bad{background:var(--err)}
+.errbox{background:var(--err-bg);color:var(--err);border-radius:10px;padding:10px 12px;margin:0 0 8px;font-size:14px}
+.errbox small{display:block;color:var(--muted);margin-top:4px}
+ul.log li{align-items:flex-start}
+ul.log .ic{flex:none;width:22px;text-align:center}
+ul.log .t b{font-weight:600}
+ul.log a{color:var(--accent);font-size:13px;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);margin:10px 0 0}
+.legend span::before{content:"";display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px;background:var(--c)}
+ul.list{list-style:none;margin:0;padding:0}
+ul.list li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+ul.list li .t{flex:1;min-width:0}
+ul.list li .t small{display:block;color:var(--muted)}
+ul.list li button{min-height:38px;padding:6px 10px;font-size:14px;flex:none}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+
+/* Cài đặt */
+details.card > summary{font-weight:700;font-size:17px;cursor:pointer;list-style:none}
+details.card > summary::after{content:" ▸";color:var(--muted)}
+details[open].card > summary::after{content:" ▾"}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.form label span{display:block;font-size:13px;color:var(--muted);margin-bottom:3px}
+.form input{width:100%}
+.full{grid-column:1/-1}
+.wdpick{display:flex;flex-wrap:wrap;gap:6px}
+.wdpick label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px}
+.chk{display:flex!important;align-items:center;gap:8px}
+.warnlist{margin:12px 0 0;padding:0;list-style:none}
+.warnlist li{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:6px}
+
+/* Dialog */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);padding:16px;width:min(92vw,420px)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h2{margin-bottom:6px}
+.dlg-luot{margin:12px 0}
+.dlg-luot > b{display:block;margin-bottom:6px}
+.dlg-luot .row select{flex:1 1 55%}
+.dlg-luot .row input{flex:1 1 35%}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>⏱ Chấm công</h1>
+  <span id="saveState" class="pill">Chưa kết nối</span>
+</div>
+<main>
+  <div id="banners"></div>
+
+  <!-- A. HÔM NAY -->
+  <section class="card hero" id="today">
+    <div class="date" id="tDate">—</div>
+    <div class="clock" id="tClock">--:--:--</div>
+    <div class="small muted">Giờ Tokyo (JST)</div>
+    <div id="tBody"></div>
+    <p class="note">Nếu bot đang trong lúc chờ để chấm, bấm Ngưng / đổi giờ vẫn có hiệu lực — bot kiểm tra lại lịch ngay trước khi bấm nút.</p>
+  </section>
+
+  <!-- NHẬT KÝ -->
+  <section class="card" id="logCard">
+    <h2>Nhật ký bot</h2>
+    <ul class="list log" id="logList"></ul>
+    <button class="link" id="logMore">Xem thêm</button>
+  </section>
+
+  <!-- B. LỊCH -->
+  <section class="card" id="cal">
+    <div class="calhead">
+      <button id="calPrev" aria-label="Tháng trước">‹</button>
+      <h2 id="calTitle">—</h2>
+      <button id="calNext" aria-label="Tháng sau">›</button>
+    </div>
+    <div class="seg" role="group" aria-label="Chế độ bấm">
+      <button id="modeToggle" class="on">Bấm = Bật/tắt nghỉ</button>
+      <button id="modeGio">Bấm = Đặt giờ riêng</button>
+    </div>
+    <div class="grid" id="calWd"></div>
+    <div class="grid" id="calGrid" style="margin-top:4px"></div>
+    <div class="legend">
+      <span style="--c:var(--le-bg)">Ngày lễ</span>
+      <span style="--c:var(--tuan-bg)">Nghỉ hằng tuần</span>
+      <span style="--c:var(--rieng-bg)">Nghỉ riêng</span>
+      <span style="--c:var(--lam-bg)">Đi làm (bỏ nghỉ)</span>
+      <span style="--c:var(--gio)">Giờ riêng (⏰)</span>
+      <span style="--c:var(--ok)">Đã chấm (chấm nhỏ)</span>
+      <span style="--c:var(--err)">Chấm lỗi</span>
+    </div>
+    <p class="note">Nhấn giữ một ngày để đặt giờ riêng.</p>
+
+    <h3>Ngày nghỉ trong tháng</h3>
+    <ul class="list" id="offList"></ul>
+    <button id="btnAddOff" class="big" style="margin-top:10px">+ Thêm ngày nghỉ</button>
+
+    <h3>Ngày có giờ riêng</h3>
+    <ul class="list" id="gioList"></ul>
+  </section>
+
+  <!-- C. CÀI ĐẶT -->
+  <details class="card" id="settings">
+    <summary>Cài đặt</summary>
+    <div class="form" id="cfgForm">
+      <label><span>Giờ chấm vào</span><input type="time" id="cfVao"></label>
+      <label><span>Giờ chấm ra</span><input type="time" id="cfRa"></label>
+      <label><span>Ngẫu nhiên thêm (phút)</span><input type="number" id="cfRand" min="0" max="30" inputmode="numeric"></label>
+      <label><span>Hạn chấm vào</span><input type="time" id="cfHan"></label>
+      <div class="full">
+        <span class="small muted">Thứ nghỉ hằng tuần</span>
+        <div class="wdpick" id="cfThu"></div>
+      </div>
+      <label class="full chk"><input type="checkbox" id="cfLe"> Tự nghỉ vào ngày lễ Nhật (gồm 振替休日, 国民の休日)</label>
+    </div>
+    <ul class="warnlist" id="cfgWarn"></ul>
+
+    <h3>Kết nối GitHub</h3>
+    <div class="form">
+      <label class="full"><span>Repo (owner/repo)</span><input id="cnRepo" placeholder="tenban/chamcong" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label class="full"><span>Fine-grained token (chỉ repo chamcong, Contents: Read and write)</span><input id="cnToken" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false"></label>
+      <div class="full row">
+        <button class="primary" id="cnSave">Kết nối</button>
+        <button class="danger" id="cnClear">Xóa token</button>
+      </div>
+      <p class="full small muted" style="margin:0">Token chỉ lưu trong trình duyệt này (localStorage). Đừng dùng máy lạ.</p>
+    </div>
+  </details>
+</main>
+
+<!-- Dialog: giờ riêng cho 1 ngày -->
+<dialog id="dlgDay">
+  <h2 id="ddTitle">—</h2>
+  <div class="small muted" id="ddInfo"></div>
+  <div class="dlg-luot" data-luot="vao">
+    <b>Chấm vào</b>
+    <div class="row">
+      <select><option value="md">Mặc định</option><option value="gio">Giờ riêng</option><option value="khong">Không chấm</option></select>
+      <input type="time">
+    </div>
+  </div>
+  <div class="dlg-luot" data-luot="ra">
+    <b>Chấm ra</b>
+    <div class="row">
+      <select><option value="md">Mặc định</option><option value="gio">Giờ riêng</option><option value="khong">Không chấm</option></select>
+      <input type="time">
+    </div>
+  </div>
+  <ul class="warnlist" id="ddWarn"></ul>
+  <div class="actions">
+    <button id="ddClose">Đóng</button>
+    <button id="ddReset">Về mặc định</button>
+    <button id="ddSave" class="primary">Lưu</button>
+  </div>
+</dialog>
+
+<!-- Dialog: thêm ngày nghỉ -->
+<dialog id="dlgAdd">
+  <h2>Thêm ngày nghỉ</h2>
+  <div class="form">
+    <label><span>Từ ngày</span><input type="date" id="adFrom"></label>
+    <label><span>Đến ngày (tuỳ chọn)</span><input type="date" id="adTo"></label>
+    <label class="full chk"><input type="checkbox" id="adSkip" checked> Bỏ qua ngày đã nghỉ sẵn (lễ, cuối tuần)</label>
+  </div>
+  <div class="small muted" id="adInfo" style="margin-top:8px"></div>
+  <div class="actions">
+    <button id="adClose">Hủy</button>
+    <button id="adSave" class="primary">Thêm</button>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+/* ================= Hằng số ================= */
+const API = "https://api.github.com";
+const HOLIDAY_URL = "https://holidays-jp.github.io/api/v1/date.json";
+const LS_REPO = "cc_repo", LS_TOKEN = "cc_token";
+const TEN_THU = ["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"];
+const THU_NGAN = ["T2","T3","T4","T5","T6","T7","CN"];
+const SOM_PHUT = 15; // phải giống kiemtra.py
+// Khung cron dự phòng (giờ Tokyo, phút từ 0h)
+const KHUNG = { vao:[9*60, 10*60+45], ra:[18*60, 23*60+45] };
+
+const S = {
+  repo: lsGet(LS_REPO) || "", token: lsGet(LS_TOKEN) || "",
+  lich: null, tt: {}, nk: [], logN: 8, hol: {}, holOk: true, loadErr: "",
+  viewY: 0, viewM: 0, mode: "toggle",
+  pending: [], // các thay đổi chưa lưu xong (áp lại sau khi tải mới)
+};
+
+/* ================= Tiện ích ================= */
+function lsGet(k){ try{ return localStorage.getItem(k); }catch{ return null; } }
+function lsSet(k,v){ try{ v==null ? localStorage.removeItem(k) : localStorage.setItem(k,v); }catch{} }
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function jstNow(){ const d = new Date(Date.now() + 9*3600e3); return d; } // dùng các hàm getUTC*
+function todayStr(){ const d = jstNow(); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`; }
+function nowMin(){ const d = jstNow(); return d.getUTCHours()*60 + d.getUTCMinutes(); }
+function toMin(h){ if(!h) return null; const [a,b] = h.split(":").map(Number); return a*60+b; }
+function fmtMin(m){ m = Math.max(0, Math.min(m, 24*60-1)); return `${pad(Math.floor(m/60))}:${pad(m%60)}`; }
+function ds(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }           // m: 0..11
+function parseDs(s){ const [y,m,d] = s.split("-").map(Number); return new Date(Date.UTC(y,m-1,d)); }
+function addDays(s,n){ const d = parseDs(s); d.setUTCDate(d.getUTCDate()+n); return ds(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
+function pyWd(s){ return (parseDs(s).getUTCDay()+6)%7; }             // 0 = Thứ 2 … 6 = CN (như Python)
+function fmtDay(s){ const [y,m,d] = s.split("-"); return `${THU_NGAN[pyWd(s)]}, ${+d}/${+m}`; }
+function fmtDayLong(s){ const [y,m,d] = s.split("-"); return `${TEN_THU[pyWd(s)]}, ${+d}/${+m}/${y}`; }
+
+/* UTF-8 ⇄ base64 đúng chuẩn */
+function b64enc(str){
+  const bytes = new TextEncoder().encode(str); let bin = "";
+  for(let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000));
+  return btoa(bin);
+}
+function b64dec(b64){
+  const bin = atob(b64.replace(/\s/g,"")); const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+/* ================= GitHub API ================= */
+function ghHeaders(json){
+  const h = { "Accept":"application/vnd.github+json", "Authorization":`Bearer ${S.token}` };
+  if(json) h["Content-Type"] = "application/json";
+  return h;
+}
+function ghUrl(file){ return `${API}/repos/${S.repo}/contents/${encodeURIComponent(file)}`; }
+
+async function ghError(res, viec){
+  let msg = ""; try{ msg = (await res.json()).message || ""; }catch{}
+  const e = new Error(); e.status = res.status;
+  const s = res.status;
+  if(s === 401) e.message = "401: Token sai hoặc đã hết hạn. Vào Cài đặt → nhập token mới.";
+  else if(s === 403 && res.headers.get("x-ratelimit-remaining") === "0") e.message = "403: Vượt giới hạn gọi API của GitHub, thử lại sau ít phút.";
+  else if(s === 403) e.message = "403: Token không đủ quyền. Cần quyền Contents: Read and write trên repo chamcong.";
+  else if(s === 404) e.message = `404: Không thấy repo hoặc file khi ${viec}. Kiểm tra "owner/repo" và token có được cấp repo này không.`;
+  else if(s === 409) e.message = "409: Xung đột phiên bản (file vừa bị sửa ở nơi khác). Đã tải lại, hãy thử lại.";
+  else if(s === 422) e.message = `422: GitHub từ chối dữ liệu (${msg}).`;
+  else e.message = `Lỗi ${s} khi ${viec}${msg ? ": "+msg : ""}`;
+  return e;
+}
+
+/* ===== Chế độ xem thử (?demo): dữ liệu giả trong bộ nhớ, không gọi GitHub ===== */
+const DEMO = new URLSearchParams(location.search).has("demo");
+const DEMO_STORE = (() => {
+  if(!DEMO) return null;
+  const t = todayStr(), d = n => addDays(t, n);
+  const files = {
+    "lich.json": { mui_gio:"Asia/Tokyo", gio_cham:{vao:"09:20", ra:"18:30"}, ngau_nhien_phut:5, han_vao:"11:00",
+      thu_nghi:[5,6], nghi_le_nhat:true, ngay_nghi:[d(6), "2026-12-29", "2026-12-30"], ngay_lam:[],
+      dieu_chinh:{ [d(4)]:{ ra:"21:00" } } },
+    "trangthai.json": { [d(-2)]:{vao:"09:22", ra:"18:33"}, [d(-1)]:{vao:"09:24", loi_ra:"18:31 — Đăng nhập xong nhưng không thấy nút 退勤 (ví dụ)"}, [t]:{vao:"09:23"} },
+    "nhatky.json": [
+      { t:`${d(-2)} 09:22:41`, luot:"vao", loai:"ok", msg:"Đã chấm vào lúc 09:22.", run:"" },
+      { t:`${d(-2)} 18:33:12`, luot:"ra", loai:"ok", msg:"Đã chấm ra lúc 18:33.", run:"" },
+      { t:`${d(-1)} 09:24:05`, luot:"vao", loai:"ok", msg:"Đã chấm vào lúc 09:24.", run:"" },
+      { t:`${d(-1)} 18:31:30`, luot:"ra", loai:"loi", msg:"Đăng nhập xong nhưng không thấy nút 退勤 (ví dụ)", run:"" },
+      { t:`${t} 09:23:02`, luot:"vao", loai:"ok", msg:"Đã chấm vào lúc 09:23.", run:"" },
+    ],
+  };
+  return Object.fromEntries(Object.entries(files).map(([k, v]) => [k, { data:v, v:1 }]));
+})();
+
+async function ghGet(file, optional){
+  if(DEMO){ await sleep(150); const f = DEMO_STORE[file]; if(!f){ if(optional) return { data:{}, sha:null }; const e = new Error("404 (demo)"); e.status = 404; throw e; } return { data: clone(f.data), sha: "v"+f.v }; }
+  let res;
+  try{ res = await fetch(ghUrl(file), { headers: ghHeaders(), cache:"no-store" }); }
+  catch{ const e = new Error("Không kết nối được GitHub (mất mạng?)."); e.status = 0; throw e; }
+  if(optional && res.status === 404) return { data:{}, sha:null };
+  if(!res.ok) throw await ghError(res, `đọc ${file}`);
+  const j = await res.json();
+  return { data: JSON.parse(b64dec(j.content)), sha: j.sha };
+}
+
+async function ghPut(file, data, sha, message){
+  if(DEMO){ await sleep(300); const f = DEMO_STORE[file]; f.data = clone(data); f.v++; console.log("[demo] lưu", file, message); return "v"+f.v; }
+  const body = { message, content: b64enc(JSON.stringify(data, null, 2) + "\n") };
+  if(sha) body.sha = sha;
+  let res;
+  try{ res = await fetch(ghUrl(file), { method:"PUT", headers: ghHeaders(true), body: JSON.stringify(body) }); }
+  catch{ const e = new Error("Không kết nối được GitHub (mất mạng?)."); e.status = 0; throw e; }
+  if(!res.ok) throw await ghError(res, `lưu ${file}`);
+  return (await res.json()).content.sha;
+}
+
+/* ================= Chuẩn hoá lich.json ================= */
+function normalize(L){
+  L.mui_gio ||= "Asia/Tokyo";
+  L.gio_cham ||= { vao:"09:20", ra:"18:30" };
+  if(L.ngau_nhien_phut == null) L.ngau_nhien_phut = 5;
+  L.han_vao ||= "11:00";
+  if(!Array.isArray(L.thu_nghi)) L.thu_nghi = [5,6];
+  if(L.nghi_le_nhat == null) L.nghi_le_nhat = true;
+  const uniqSort = a => [...new Set((a||[]).filter(x => /^\d{4}-\d\d-\d\d$/.test(x)))].sort();
+  L.ngay_nghi = uniqSort(L.ngay_nghi);
+  L.ngay_lam = uniqSort(L.ngay_lam);
+  L.thu_nghi = [...new Set(L.thu_nghi)].sort();
+  const dc = L.dieu_chinh || {}; const out = {};
+  for(const k of Object.keys(dc).sort()){
+    const v = dc[k] || {}; const e = {};
+    if("vao" in v) e.vao = v.vao; if("ra" in v) e.ra = v.ra;
+    if(Object.keys(e).length) out[k] = e;
+  }
+  L.dieu_chinh = out;
+  return L;
+}
+
+/* ================= Lưu ngay (hàng đợi) ================= */
+let queue = Promise.resolve();
+function setSave(state, text){
+  const el = $("#saveState");
+  el.className = "pill " + (state||"");
+  el.textContent = text;
+  el.title = text;
+}
+
+function save(message, mutate){
+  if(!S.lich) return;
+  if(!S.token || !S.repo){ alert("Chưa kết nối GitHub. Mở Cài đặt để nhập repo và token."); return; }
+  const item = { mutate };
+  S.pending.push(item);
+  mutate(S.lich); normalize(S.lich);           // cập nhật giao diện ngay
+  renderAll();
+  setSave("saving", "Đang lưu…");
+  queue = queue.then(async () => {
+    for(let lan=0; ; lan++){
+      try{
+        const { data, sha } = await ghGet("lich.json");  // luôn lấy sha mới nhất
+        normalize(data); mutate(data); normalize(data);
+        await ghPut("lich.json", data, sha, `web: ${message}`);
+        S.pending.splice(S.pending.indexOf(item), 1);
+        S.lich = data; reapplyPending();
+        return;
+      }catch(e){
+        if(e.status === 409 && lan < 2){ await sleep(1500); continue; }
+        throw e;
+      }
+    }
+  }).then(() => {
+    if(!S.pending.length) setSave("ok", "Đã lưu ✓");
+    renderAll();
+  }, async e => {
+    S.pending.splice(S.pending.indexOf(item), 1);
+    setSave("err", "Lỗi lưu");
+    showBanner("err", `Không lưu được “${message}”. ${e.message}`);
+    try{ const { data } = await ghGet("lich.json"); S.lich = normalize(data); reapplyPending(); }catch{}
+    renderAll();
+  });
+}
+// Ghi trangthai.json (chỉ dùng cho nút "Thử lại": xoá dấu lỗi / chạy thử)
+function saveTT(message, mutate){
+  mutate(S.tt); renderAll();
+  setSave("saving", "Đang lưu…");
+  queue = queue.then(async () => {
+    for(let lan=0; ; lan++){
+      try{
+        const { data, sha } = await ghGet("trangthai.json");
+        mutate(data);
+        await ghPut("trangthai.json", data, sha, `web: ${message}`);
+        S.tt = data; return;
+      }catch(e){
+        if(e.status === 409 && lan < 2){ await sleep(1500); continue; }
+        throw e;
+      }
+    }
+  }).then(() => { if(!S.pending.length) setSave("ok", "Đã lưu ✓"); renderAll(); },
+          e => { setSave("err", "Lỗi lưu"); showBanner("err", `Không lưu được “${message}”. ${e.message}`); refreshTrangThai(); });
+}
+function reapplyPending(){ for(const p of S.pending){ p.mutate(S.lich); } normalize(S.lich); }
+
+/* ================= Tải dữ liệu ================= */
+async function loadHolidays(){
+  try{
+    const r = await fetch(HOLIDAY_URL, { cache:"no-cache" });
+    if(!r.ok) throw 0;
+    S.hol = await r.json(); S.holOk = true;
+  }catch{ S.holOk = false; S.hol = {}; }
+}
+
+async function loadAll(){
+  if(!S.repo || !S.token){ S.lich = null; setSave("", "Chưa kết nối"); renderAll(); return; }
+  if(!S.pending.length) setSave("saving", "Đang tải…");
+  try{
+    const [l, t, n] = await Promise.all([ ghGet("lich.json"), ghGet("trangthai.json", true), ghGet("nhatky.json", true) ]);
+    S.lich = normalize(l.data); S.tt = t.data || {}; S.nk = Array.isArray(n.data) ? n.data : []; S.loadErr = "";
+    reapplyPending();
+    if(!S.pending.length) setSave("ok", "Đã đồng bộ");
+  }catch(e){
+    S.loadErr = e.message; setSave("err", "Lỗi tải");
+    if(S.lich) showBanner("err", e.message);
+  }
+  renderAll();
+}
+
+async function refreshTrangThai(){
+  if(!S.repo || !S.token || !S.lich) return;
+  try{
+    const [t, n] = await Promise.all([ ghGet("trangthai.json", true), ghGet("nhatky.json", true) ]);
+    S.tt = t.data || {}; S.nk = Array.isArray(n.data) ? n.data : [];
+    renderToday(); renderCal(); renderLog();
+  }catch{}
+}
+
+/* ================= Logic ngày (giống kiemtra.py) ================= */
+function dayInfo(d){
+  const L = S.lich, wd = pyWd(d), hol = S.hol[d] || "";
+  const isLam = L.ngay_lam.includes(d);
+  const isRieng = L.ngay_nghi.includes(d);
+  const isLe = !!(L.nghi_le_nhat && hol);
+  const isTuan = L.thu_nghi.includes(wd);
+  const off = !isLam && (isLe || isRieng || isTuan);
+  const reason = isLe ? `Ngày lễ: ${hol}` : isRieng ? "Nghỉ riêng" : isTuan ? (wd>=5 ? "Cuối tuần" : "Nghỉ hằng tuần") : "";
+  const baseOff = isLe || isTuan; // nghỉ "sẵn" (không phải do mình thêm)
+  return { d, wd, hol, isLam, isRieng, isLe, isTuan, off, baseOff, reason, dc: L.dieu_chinh[d] || null, done: S.tt[d] || null };
+}
+
+// Khoảng giờ mục tiêu: {kind:'none'} | {kind:'exact', from} | {kind:'range', from, to}
+function target(d, luot){
+  const L = S.lich, dc = L.dieu_chinh[d] || {};
+  if(luot in dc) return dc[luot] === null ? { kind:"none" } : { kind:"exact", from: toMin(dc[luot]), to: toMin(dc[luot]) };
+  const f = toMin(L.gio_cham[luot]); return { kind:"range", from: f, to: f + (+L.ngau_nhien_phut || 0) };
+}
+
+function luotStatus(info, luot){
+  const L = S.lich;
+  if(info.done && info.done[luot]) return { cls:"done", text:`Đã chấm lúc ${info.done[luot]}` };
+  if(info.done && info.done["loi_"+luot]) return { cls:"stop", text:`Lỗi lúc ${info.done["loi_"+luot].slice(0,5)} — đã ngưng`, loi: info.done["loi_"+luot] };
+  if(info.done && info.done["dang_"+luot]) return { cls:"warn", text:`Đã bấm lúc ${info.done["dang_"+luot]} — chưa nhận được kết quả`, loi: `Bot đã bấm nút lúc ${info.done["dang_"+luot]} nhưng chưa ghi được kết quả cuối (có thể đang ghi, hoặc lần chạy bị gián đoạn).` };
+  if(info.done && info.done["thu_"+luot]) return { cls:"off", text:`Đã chạy thử lúc ${info.done["thu_"+luot]} (không bấm)`, thu: true };
+  if(info.off) return { cls:"off", text:"Không chấm (ngày nghỉ)" };
+  const t = target(info.d, luot);
+  if(t.kind === "none") return { cls:"stop", text:"Đã ngưng" };
+  const gio = t.kind === "exact" ? `lúc ${fmtMin(t.from)} (giờ riêng)` : `khoảng ${fmtMin(t.from)}–${fmtMin(t.to)}`;
+  if(info.d === todayStr()){
+    const now = nowMin();
+    if(luot === "vao" && info.done && info.done.ra) return { cls:"off", text:"Bỏ qua (đã chấm ra)" };
+    if(luot === "vao" && now >= toMin(L.han_vao)) return { cls:"warn", text:`Quá hạn chấm vào (${L.han_vao}) — bot không chấm nữa` };
+    if(now > t.to + 25) return { cls:"warn", text:`Đã qua giờ (${fmtMin(t.to)}) mà chưa thấy ghi nhận — xem tab Actions` };
+    if(now >= t.from - SOM_PHUT) return { cls:"plan", text:`Bot sắp chấm ${gio}` };
+  }
+  return { cls:"plan", text:`Sẽ chấm ${gio}` };
+}
+
+/* Các thao tác ghi */
+const addTo = (arr, d) => L => { if(!L[arr].includes(d)) L[arr].push(d); };
+const delFrom = (arr, d) => L => { L[arr] = L[arr].filter(x => x !== d); };
+function setDc(d, luot, val){ return L => { (L.dieu_chinh[d] ||= {})[luot] = val; }; }
+function unsetDc(d, luot){ return L => { if(L.dieu_chinh[d]){ delete L.dieu_chinh[d][luot]; if(!Object.keys(L.dieu_chinh[d]).length) delete L.dieu_chinh[d]; } }; }
+function makeWorkday(d){
+  const i = dayInfo(d);
+  save(`đi làm ngày ${d}`, L => { delFrom("ngay_nghi", d)(L); if(i.baseOff) addTo("ngay_lam", d)(L); });
+}
+
+/* ================= Render: Hôm nay ================= */
+function renderClock(){
+  const d = jstNow();
+  $("#tClock").textContent = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+  $("#tDate").textContent = fmtDayLong(todayStr());
+}
+
+function renderToday(){
+  const box = $("#tBody");
+  if(!S.lich){ box.innerHTML = `<p class="muted">${S.loadErr ? esc(S.loadErr) : "Chưa kết nối GitHub — mở <b>Cài đặt</b> bên dưới để nhập repo và token."}</p>`; return; }
+  const d = todayStr(), i = dayInfo(d), L = S.lich;
+  let h = "";
+  if(i.off){
+    const cls = i.isLe ? "le" : i.isRieng ? "rieng" : "";
+    h += `<div class="offbox ${cls}"><b>Hôm nay nghỉ — ${esc(i.reason)}</b><button class="big primary" data-act="workToday">Hôm nay vẫn đi làm</button></div>`;
+  }else if(i.isLam){
+    h += `<div class="offbox"><b>Hôm nay đi làm dù là ngày nghỉ${i.hol ? " ("+esc(i.hol)+")" : ""}</b><button class="big" data-act="unLamToday">Bỏ — hôm nay nghỉ</button></div>`;
+  }else{
+    h += `<div style="margin:10px 0"><button class="link" data-act="offToday">Hôm nay nghỉ (thêm vào ngày nghỉ)</button></div>`;
+  }
+  for(const luot of ["vao","ra"]){
+    const st = luotStatus(i, luot), t = target(d, luot);
+    const name = luot === "vao" ? "Chấm vào" : "Chấm ra";
+    h += `<div class="luot"><div class="head"><span class="name">${name}</span><span class="st ${st.cls}">${esc(st.text)}</span></div>`;
+    if(st.loi){
+      h += `<div class="errbox">${esc(st.loi)}<small>Bot sẽ không tự thử lại. Hãy kiểm tra trên Kintai Plus trước — nếu đã được ghi thì đừng bấm Thử lại.</small></div>
+            <button class="big primary" data-act="retry" data-luot="${luot}">Thử lại (bot chấm ở lần chạy kế tiếp)</button>`;
+    }else if(st.thu){
+      h += `<button class="big" data-act="retry" data-luot="${luot}">Cho chạy lại lượt này</button>`;
+    }else if(!i.off && !(i.done && i.done[luot])){
+      if(t.kind === "none") h += `<button class="big primary" data-act="on" data-luot="${luot}">Bật lại ${name.toLowerCase()} (giờ mặc định)</button>`;
+      else{
+        h += `<button class="big danger" data-act="stop" data-luot="${luot}">Ngưng ${name.toLowerCase()} hôm nay</button>`;
+        if(t.kind === "exact") h += `<button class="link" data-act="on" data-luot="${luot}">Về giờ mặc định</button>`;
+      }
+    }
+    if(luot === "ra" && !i.off && !(i.done && (i.done.ra || i.done.loi_ra || i.done.dang_ra))){
+      const base = toMin(L.gio_cham.ra);
+      h += `<div class="ot">${[1,2,3].map(n => `<button data-act="ot" data-min="${base+n*60}">Ra ${fmtMin(base+n*60)}<br><small>+${n}h</small></button>`).join("")}</div>
+            <div class="row"><input type="time" id="otTime" value="${t.kind==="exact" ? fmtMin(t.from) : fmtMin(base+60)}"><button data-act="otCustom">Đặt giờ ra</button></div>`;
+    }
+    h += `</div>`;
+  }
+  h += `<button class="link" data-act="dayDlg">Đặt giờ riêng cho hôm nay…</button>`;
+  box.innerHTML = h;
+}
+
+$("#tBody").addEventListener("click", e => {
+  const b = e.target.closest("button[data-act]"); if(!b) return;
+  const d = todayStr(), luot = b.dataset.luot, act = b.dataset.act;
+  const ten = luot === "vao" ? "vào" : "ra";
+  if(act === "retry"){
+    if(!confirm(`Bot sẽ BẤM LẠI lượt ${ten} hôm nay ở lần chạy kế tiếp.
+Chỉ đồng ý nếu bạn đã kiểm tra trên Kintai Plus là CHƯA được ghi.
+
+Tiếp tục?`)) return;
+    return saveTT(`thử lại chấm ${ten} ${d}`, T => { if(T[d]){ delete T[d]["loi_"+luot]; delete T[d]["thu_"+luot]; delete T[d]["dang_"+luot]; if(!Object.keys(T[d]).length) delete T[d]; } });
+  }
+  if(act === "stop") save(`ngưng chấm ${ten} ${d}`, setDc(d, luot, null));
+  else if(act === "on") save(`bật lại chấm ${ten} ${d}`, unsetDc(d, luot));
+  else if(act === "ot"){ const g = fmtMin(+b.dataset.min); save(`chấm ra ${g} ngày ${d}`, setDc(d, "ra", g)); }
+  else if(act === "otCustom"){ const g = $("#otTime").value; if(!g) return; save(`chấm ra ${g} ngày ${d}`, setDc(d, "ra", g)); }
+  else if(act === "workToday") makeWorkday(d);
+  else if(act === "unLamToday") save(`bỏ đi làm ${d}`, delFrom("ngay_lam", d));
+  else if(act === "offToday"){ if(confirm("Đánh dấu hôm nay là ngày nghỉ? Bot sẽ không chấm hôm nay.")) save(`nghỉ ${d}`, addTo("ngay_nghi", d)); }
+  else if(act === "dayDlg") openDay(d);
+});
+
+/* ================= Render: Lịch ================= */
+function renderCal(){
+  const y = S.viewY, m = S.viewM;
+  $("#calTitle").textContent = `Tháng ${m+1}/${y}`;
+  $("#calWd").innerHTML = THU_NGAN.map(t => `<div class="wd">${t}</div>`).join("");
+  const grid = $("#calGrid");
+  if(!S.lich){ grid.innerHTML = ""; $("#offList").innerHTML = ""; $("#gioList").innerHTML = ""; return; }
+  const first = ds(y,m,1), offset = pyWd(first);
+  const days = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+  const today = todayStr();
+  let h = "";
+  for(let k=0;k<offset;k++) h += `<div class="day blank"></div>`;
+  for(let n=1;n<=days;n++){
+    const d = ds(y,m,n), i = dayInfo(d);
+    const cls = ["day"];
+    if(i.isLam) cls.push("lam");
+    else if(i.isRieng) cls.push("rieng");
+    else if(i.isLe) cls.push("le");
+    else if(i.isTuan) cls.push("tuan");
+    if(i.dc) cls.push("gio");
+    if(d === today) cls.push("today");
+    const lb = i.hol ? i.hol.replace(/の日$/,"").slice(0,4) : i.isRieng && !i.isLam ? "nghỉ" : i.isLam ? "đi làm" : "";
+    let dot = "";
+    if(i.done){ dot = `<span class="dot ${i.done.loi_vao || i.done.loi_ra || i.done.dang_vao || i.done.dang_ra ? "bad" : i.done.vao && i.done.ra ? "" : "half"}"></span>`; }
+    const tip = [i.hol, i.reason, i.isLam ? "Đi làm (bỏ nghỉ)" : "", i.done ? `Đã chấm: ${i.done.vao||"-"} / ${i.done.ra||"-"}` : ""].filter(Boolean).join(" · ");
+    h += `<button class="${cls.join(" ")}" data-d="${d}" title="${esc(tip)}"><span class="n">${n}</span><span class="lb">${esc(lb)}</span>${dot}</button>`;
+  }
+  grid.innerHTML = h;
+  renderLists();
+}
+
+function renderLists(){
+  const y = S.viewY, m = S.viewM, days = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+  let off = "", gio = "";
+  for(let n=1;n<=days;n++){
+    const d = ds(y,m,n), i = dayInfo(d);
+    if(i.isLam){
+      off += `<li><span class="t">${fmtDay(d)} — <b>Đi làm</b><small>Thay cho: ${esc(i.hol || (i.isRieng ? "nghỉ riêng" : i.isTuan ? "nghỉ hằng tuần" : "—"))}</small></span><button data-act="unLam" data-d="${d}">Bỏ (nghỉ lại)</button></li>`;
+    }else if(i.isRieng || i.isLe){
+      const why = i.isRieng ? "Nghỉ riêng" + (i.hol ? ` · ${i.hol}` : "") : `Ngày lễ: ${i.hol}`;
+      const btn = i.isRieng ? `<button class="danger" data-act="delOff" data-d="${d}">Xóa</button>` : `<button data-act="work" data-d="${d}">Đi làm ngày này</button>`;
+      off += `<li><span class="t">${fmtDay(d)}<small>${esc(why)}</small></span>${btn}</li>`;
+    }else if(i.hol){
+      off += `<li><span class="t">${fmtDay(d)}<small>${esc(i.hol)} (đang tắt nghỉ lễ)</small></span></li>`;
+    }
+    if(i.dc){
+      const p = ["vao","ra"].filter(k => k in i.dc).map(k => `${k==="vao"?"Vào":"Ra"}: ${i.dc[k] === null ? "không chấm" : i.dc[k]}`).join(" · ");
+      const w = dcWarnings(d, i.dc);
+      gio += `<li><span class="t">${fmtDay(d)}${i.off ? " <span class='muted'>(ngày nghỉ)</span>" : ""}<small>${esc(p)}${w.length ? " ⚠ " + esc(w.join(" ")) : ""}</small></span><button data-act="edit" data-d="${d}">Sửa</button><button class="danger" data-act="delDc" data-d="${d}">Xóa</button></li>`;
+    }
+  }
+  $("#offList").innerHTML = off || `<li class="empty">Không có ngày lễ / nghỉ riêng trong tháng này (không liệt kê thứ nghỉ hằng tuần).</li>`;
+  $("#gioList").innerHTML = gio || `<li class="empty">Không có.</li>`;
+}
+
+function toggleDay(d){
+  const i = dayInfo(d);
+  if(i.isLam) return save(`bỏ đi làm ${d}`, delFrom("ngay_lam", d));
+  if(i.isRieng) return save(`bỏ nghỉ ${d}`, delFrom("ngay_nghi", d));
+  if(i.isLe || i.isTuan){
+    if(confirm(`${fmtDayLong(d)} là ${i.reason.toLowerCase()}.\nNgày này vẫn đi làm?`)) save(`đi làm ${d}`, addTo("ngay_lam", d));
+    return;
+  }
+  save(`nghỉ ${d}`, addTo("ngay_nghi", d));
+}
+
+// Bấm / nhấn giữ trên lịch
+(() => {
+  const grid = $("#calGrid"); let timer = null, longFired = false, startXY = null;
+  grid.addEventListener("pointerdown", e => {
+    const b = e.target.closest(".day[data-d]"); if(!b) return;
+    longFired = false; startXY = [e.clientX, e.clientY];
+    timer = setTimeout(() => { longFired = true; if(navigator.vibrate) navigator.vibrate(20); openDay(b.dataset.d); }, 550);
+  });
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  grid.addEventListener("pointerup", cancel);
+  grid.addEventListener("pointerleave", cancel);
+  grid.addEventListener("pointercancel", cancel);
+  grid.addEventListener("pointermove", e => { if(startXY && Math.hypot(e.clientX-startXY[0], e.clientY-startXY[1]) > 10) cancel(); });
+  grid.addEventListener("contextmenu", e => { if(e.target.closest(".day")) e.preventDefault(); });
+  grid.addEventListener("click", e => {
+    const b = e.target.closest(".day[data-d]"); if(!b) return;
+    if(longFired){ longFired = false; return; }
+    if(!S.lich) return;
+    S.mode === "gio" ? openDay(b.dataset.d) : toggleDay(b.dataset.d);
+  });
+})();
+
+$("#offList").addEventListener("click", e => {
+  const b = e.target.closest("button[data-act]"); if(!b) return; const d = b.dataset.d;
+  if(b.dataset.act === "delOff") save(`bỏ nghỉ ${d}`, delFrom("ngay_nghi", d));
+  if(b.dataset.act === "work") save(`đi làm ${d}`, addTo("ngay_lam", d));
+  if(b.dataset.act === "unLam") save(`bỏ đi làm ${d}`, delFrom("ngay_lam", d));
+});
+$("#gioList").addEventListener("click", e => {
+  const b = e.target.closest("button[data-act]"); if(!b) return; const d = b.dataset.d;
+  if(b.dataset.act === "edit") openDay(d);
+  if(b.dataset.act === "delDc") save(`xóa giờ riêng ${d}`, L => { delete L.dieu_chinh[d]; });
+});
+
+$("#calPrev").onclick = () => { if(--S.viewM < 0){ S.viewM = 11; S.viewY--; } renderCal(); };
+$("#calNext").onclick = () => { if(++S.viewM > 11){ S.viewM = 0; S.viewY++; } renderCal(); };
+$("#modeToggle").onclick = () => { S.mode = "toggle"; $("#modeToggle").classList.add("on"); $("#modeGio").classList.remove("on"); };
+$("#modeGio").onclick = () => { S.mode = "gio"; $("#modeGio").classList.add("on"); $("#modeToggle").classList.remove("on"); };
+
+/* ================= Dialog giờ riêng ================= */
+let dlgDate = null;
+function openDay(d){
+  if(!S.lich) return;
+  dlgDate = d; const i = dayInfo(d), L = S.lich, dc = i.dc || {};
+  $("#ddTitle").textContent = fmtDayLong(d);
+  $("#ddInfo").textContent = [i.off ? `Ngày nghỉ (${i.reason}) — giờ riêng chỉ có tác dụng nếu đi làm.` : (i.isLam ? "Đi làm (bỏ nghỉ)." : "Ngày làm."),
+    i.done ? `Đã chấm: vào ${i.done.vao||"-"}, ra ${i.done.ra||"-"}.` : ""].join(" ");
+  for(const box of document.querySelectorAll("#dlgDay .dlg-luot")){
+    const luot = box.dataset.luot, sel = $("select", box), inp = $("input", box);
+    if(!(luot in dc)){ sel.value = "md"; inp.value = L.gio_cham[luot]; }
+    else if(dc[luot] === null){ sel.value = "khong"; inp.value = L.gio_cham[luot]; }
+    else { sel.value = "gio"; inp.value = dc[luot]; }
+    inp.disabled = sel.value !== "gio";
+    sel.onchange = () => { inp.disabled = sel.value !== "gio"; ddWarn(); };
+    inp.oninput = ddWarn;
+  }
+  ddWarn();
+  $("#dlgDay").showModal();
+}
+function ddRead(){
+  const e = {};
+  for(const box of document.querySelectorAll("#dlgDay .dlg-luot")){
+    const luot = box.dataset.luot, v = $("select", box).value, t = $("input", box).value;
+    if(v === "khong") e[luot] = null; else if(v === "gio" && t) e[luot] = t;
+  }
+  return e;
+}
+function ddWarn(){ $("#ddWarn").innerHTML = dcWarnings(dlgDate, ddRead()).map(w => `<li>${esc(w)}</li>`).join(""); }
+$("#ddClose").onclick = () => $("#dlgDay").close();
+$("#ddReset").onclick = () => { const d = dlgDate; $("#dlgDay").close(); save(`xóa giờ riêng ${d}`, L => { delete L.dieu_chinh[d]; }); };
+$("#ddSave").onclick = () => {
+  const d = dlgDate, e = ddRead(); $("#dlgDay").close();
+  save(`giờ riêng ${d}: ${JSON.stringify(e)}`, L => { if(Object.keys(e).length) L.dieu_chinh[d] = clone(e); else delete L.dieu_chinh[d]; });
+};
+
+/* ================= Dialog thêm ngày nghỉ ================= */
+$("#btnAddOff").onclick = () => {
+  if(!S.lich) return alert("Chưa kết nối GitHub.");
+  const t = todayStr(), firstOfView = ds(S.viewY, S.viewM, 1);
+  $("#adFrom").value = firstOfView > t ? firstOfView : t; $("#adTo").value = ""; adInfo();
+  $("#dlgAdd").showModal();
+};
+function adRange(){
+  const f = $("#adFrom").value, t = $("#adTo").value || f;
+  if(!f || t < f) return null;
+  const out = []; let d = f;
+  while(d <= t && out.length < 400){
+    const i = dayInfo(d);
+    if(!i.isRieng && !($("#adSkip").checked && i.baseOff && !i.isLam)) out.push(d);
+    d = addDays(d, 1);
+  }
+  return out;
+}
+function adInfo(){ const r = adRange(); $("#adInfo").textContent = r == null ? "Khoảng ngày không hợp lệ." : r.length > 62 ? "Tối đa 62 ngày một lần." : `Sẽ thêm ${r.length} ngày.`; }
+["#adFrom","#adTo","#adSkip"].forEach(s => $(s).addEventListener("input", adInfo));
+$("#adClose").onclick = () => $("#dlgAdd").close();
+$("#adSave").onclick = () => {
+  const r = adRange(); if(!r || !r.length || r.length > 62) return adInfo();
+  $("#dlgAdd").close();
+  const msg = r.length === 1 ? `nghỉ ${r[0]}` : `nghỉ ${r[0]} → ${r[r.length-1]} (${r.length} ngày)`;
+  save(msg, L => { for(const d of r){ if(!L.ngay_nghi.includes(d)) L.ngay_nghi.push(d); L.ngay_lam = L.ngay_lam.filter(x => x !== d); } });
+};
+
+/* ================= Cài đặt ================= */
+function inWindow(luot, m){ return m >= KHUNG[luot][0] && m <= KHUNG[luot][1]; }
+function dcWarnings(d, dc){
+  const w = [], L = S.lich; if(!dc) return w;
+  if(typeof dc.vao === "string"){
+    if(!inWindow("vao", toMin(dc.vao))) w.push(`Giờ vào ${dc.vao} ngoài khung cron dự phòng 09:00–10:45.`);
+    if(toMin(dc.vao) >= toMin(L.han_vao)) w.push(`Giờ vào ${dc.vao} không trước hạn chấm vào ${L.han_vao} → bot sẽ không chấm.`);
+  }
+  if(typeof dc.ra === "string" && !inWindow("ra", toMin(dc.ra))) w.push(`Giờ ra ${dc.ra} ngoài khung cron dự phòng 18:00–23:45.`);
+  return w;
+}
+function cfgWarnings(){
+  const L = S.lich, w = [], n = +L.ngau_nhien_phut || 0;
+  const v = toMin(L.gio_cham.vao), r = toMin(L.gio_cham.ra), han = toMin(L.han_vao);
+  if(!inWindow("vao", v) || !inWindow("vao", v+n)) w.push(`Giờ vào ${L.gio_cham.vao}–${fmtMin(v+n)} nằm ngoài khung cron dự phòng (09:00–10:45). Sửa schedule trong chamcong.yml cho khớp.`);
+  if(!inWindow("ra", r) || !inWindow("ra", r+n)) w.push(`Giờ ra ${L.gio_cham.ra}–${fmtMin(r+n)} nằm ngoài khung cron dự phòng (18:00–23:45).`);
+  if(v + n >= han) w.push(`Giờ vào + ngẫu nhiên (${fmtMin(v+n)}) không trước hạn chấm vào ${L.han_vao}.`);
+  // cron-job.org gọi lúc 9:12 / 18:22; bot chỉ khởi động sớm tối đa SOM_PHUT phút.
+  const CJ = { vao: 9*60+12, ra: 18*60+22 };
+  if(v < CJ.vao || v+n > CJ.vao+SOM_PHUT) w.push(`cron-job.org gọi lúc 09:12 nên chỉ chấm đúng giờ cho giờ vào trong 09:12–${fmtMin(CJ.vao+SOM_PHUT)}. Ngoài khoảng đó sẽ nhờ cron dự phòng (thường trễ 5–20 phút) — hãy đổi giờ gọi trên cron-job.org.`);
+  if(r < CJ.ra || r+n > CJ.ra+SOM_PHUT) w.push(`cron-job.org gọi lúc 18:22 nên chỉ chấm đúng giờ cho giờ ra trong 18:22–${fmtMin(CJ.ra+SOM_PHUT)}. Ngoài khoảng đó sẽ nhờ cron dự phòng — hãy đổi giờ gọi trên cron-job.org.`);
+  return w;
+}
+function renderSettings(){
+  $("#cnRepo").value = S.repo; $("#cnToken").value = S.token ? "••••••••" + S.token.slice(-4) : "";
+  const form = $("#cfgForm");
+  form.querySelectorAll("input").forEach(x => x.disabled = !S.lich);
+  if(!S.lich){ $("#cfgWarn").innerHTML = ""; $("#cfThu").innerHTML = ""; return; }
+  const L = S.lich, act = document.activeElement;
+  const set = (id, v) => { const el = $(id); if(el !== act) el.value = v; };
+  set("#cfVao", L.gio_cham.vao); set("#cfRa", L.gio_cham.ra); set("#cfRand", L.ngau_nhien_phut); set("#cfHan", L.han_vao);
+  $("#cfLe").checked = !!L.nghi_le_nhat;
+  $("#cfThu").innerHTML = TEN_THU.map((t,k) => `<label><input type="checkbox" value="${k}" ${L.thu_nghi.includes(k) ? "checked" : ""}> ${t}</label>`).join("");
+  $("#cfgWarn").innerHTML = cfgWarnings().map(w => `<li>${esc(w)}</li>`).join("");
+}
+$("#cfVao").addEventListener("change", e => { const v = e.target.value; if(v) save(`giờ vào mặc định ${v}`, L => { L.gio_cham.vao = v; }); });
+$("#cfRa").addEventListener("change", e => { const v = e.target.value; if(v) save(`giờ ra mặc định ${v}`, L => { L.gio_cham.ra = v; }); });
+$("#cfHan").addEventListener("change", e => { const v = e.target.value; if(v) save(`hạn chấm vào ${v}`, L => { L.han_vao = v; }); });
+$("#cfRand").addEventListener("change", e => { const v = Math.max(0, Math.min(30, parseInt(e.target.value, 10) || 0)); save(`ngẫu nhiên ${v} phút`, L => { L.ngau_nhien_phut = v; }); });
+$("#cfLe").addEventListener("change", e => { const v = e.target.checked; save(`nghỉ lễ Nhật: ${v ? "bật" : "tắt"}`, L => { L.nghi_le_nhat = v; }); });
+$("#cfThu").addEventListener("change", () => {
+  const v = [...document.querySelectorAll("#cfThu input:checked")].map(x => +x.value);
+  save(`thứ nghỉ: ${v.map(k => THU_NGAN[k]).join(",") || "không"}`, L => { L.thu_nghi = v; });
+});
+$("#cnToken").addEventListener("focus", e => { if(e.target.value.startsWith("••")) e.target.value = ""; });
+$("#cnSave").onclick = () => {
+  const repo = $("#cnRepo").value.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
+  const tok = $("#cnToken").value.trim();
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)) return alert('Repo phải có dạng "owner/repo".');
+  if(DEMO) return alert("Đang ở chế độ xem thử. Bỏ ?demo khỏi địa chỉ để kết nối GitHub thật.");
+  S.repo = repo; lsSet(LS_REPO, repo);
+  if(tok && !tok.startsWith("••")){ S.token = tok; lsSet(LS_TOKEN, tok); }
+  if(!S.token) return alert("Hãy nhập token.");
+  clearBanners(); loadAll();
+};
+$("#cnClear").onclick = () => {
+  if(!confirm("Xóa token khỏi trình duyệt này?")) return;
+  S.token = ""; lsSet(LS_TOKEN, null); S.lich = null; S.tt = {}; setSave("", "Chưa kết nối"); renderAll();
+};
+
+/* ================= Nhật ký ================= */
+const LOG_IC = { ok:"✅", loi:"❌", ngung:"⏸", thu:"🧪" };
+const LOG_LUOT = { vao:"Vào", ra:"Ra", thu:"Chạy thử" };
+function renderLog(){
+  const list = $("#logList");
+  if(!S.lich){ list.innerHTML = `<li class="empty">Chưa kết nối.</li>`; $("#logMore").classList.add("hidden"); return; }
+  const rows = S.nk.slice().reverse();
+  list.innerHTML = rows.slice(0, S.logN).map(e => {
+    const [d, t] = (e.t || "").split(" ");
+    return `<li><span class="ic">${LOG_IC[e.loai] || "•"}</span><span class="t"><b>${d ? fmtDay(d) : ""} ${esc((t||"").slice(0,5))} · ${esc(LOG_LUOT[e.luot] || e.luot)}</b><small>${esc(e.msg || "")}</small></span>${e.run ? `<a href="${esc(e.run)}" target="_blank" rel="noopener">Log ↗</a>` : ""}</li>`;
+  }).join("") || `<li class="empty">Chưa có gì. Bot ghi vào đây mỗi khi chấm, lỗi, bị ngưng hoặc chạy thử.</li>`;
+  $("#logMore").classList.toggle("hidden", rows.length <= S.logN);
+}
+$("#logMore").onclick = () => { S.logN += 20; renderLog(); };
+
+/* ================= Banner ================= */
+function showBanner(kind, text){
+  const el = document.createElement("div"); el.className = `banner ${kind}`; el.textContent = text;
+  el.title = "Bấm để ẩn"; el.onclick = () => el.remove();
+  $("#banners").appendChild(el);
+}
+function clearBanners(){ $("#banners").innerHTML = ""; }
+
+/* ================= Khởi động ================= */
+function renderAll(){ renderToday(); renderLog(); renderCal(); renderSettings(); }
+
+(async function init(){
+  const t = jstNow(); S.viewY = t.getUTCFullYear(); S.viewM = t.getUTCMonth();
+  renderClock(); setInterval(renderClock, 1000);
+  let lastMin = nowMin(), lastDay = todayStr();
+  setInterval(() => {
+    if(nowMin() !== lastMin){ lastMin = nowMin(); renderToday(); }
+    if(todayStr() !== lastDay){ lastDay = todayStr(); renderAll(); }
+  }, 1000);
+  setInterval(refreshTrangThai, 120e3);
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) loadAll(); });
+  if(DEMO){
+    S.repo = "demo/chamcong"; S.token = "demo";
+    showBanner("warn", "CHẾ ĐỘ XEM THỬ — dữ liệu giả, mọi thao tác chỉ lưu tạm trong trình duyệt, KHÔNG gửi lên GitHub. Tải lại trang là mất. Bỏ ?demo khỏi địa chỉ để dùng thật.");
+  }
+  if(!S.token) $("#settings").open = true;
+  renderAll();
+  await Promise.all([ loadHolidays().then(() => { if(!S.holOk) showBanner("warn", "Không tải được danh sách ngày lễ Nhật — lịch vẫn dùng được nhưng sẽ không hiện ngày lễ. (Bot vẫn tự nghỉ lễ bằng jpholiday.)"); }), loadAll() ]);
+  renderAll();
+})();
+</script>
+</body>
+</html>
